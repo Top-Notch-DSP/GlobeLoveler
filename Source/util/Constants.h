@@ -14,6 +14,20 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+  ==============================================================================
+*/
+
+/*
+  ==============================================================================
+    File:           Constants.cpp
+    Developers:     D. Robert Hoover and Kris Keillor
+    Repository URL: https://github.com/Top-Notch-DSP/GlobeLoveler
+    Date:           2024 Feb 1
+    Forked From:    p-hlp
+    Original URL:   https://github.com/p-hlp/SMPLComp/tree/master
+    License:        GNU General Public License, version 3.0 (GPL-3.0)
+  ==============================================================================
 */
 
 #pragma once
@@ -21,6 +35,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace Constants
 {
+    constexpr uint32_t BaseSampleRate = 44100;
+    constexpr uint32_t BaseSamplesPerBlock = 480;
+
+    static enum RadioGroups {
+        AllPassEn = 1001, 
+        AllPassMode = 1002
+    };
+
+    namespace LAF
+    {
+        constexpr uint8_t ButtonHeight = 30;
+    }
+
     namespace Colors
     {
         //Backgrounds
@@ -47,8 +74,23 @@ namespace Constants
         constexpr float big = 8.0f;
     }
 
+    namespace Containers
+    {
+        constexpr float ButtonHeight = 88.0f;
+        constexpr float ButtonWidth = 96.0f;
+        constexpr float ToggleHeight = 30.0f;
+
+        // Width enough for buttons and margins plus extra margins to widen the visualizer -KGK
+        constexpr float WindowWidth = Constants::Containers::ButtonWidth * 4 + Constants::Margins::big * 2 + Constants::Margins::big * 4;
+        constexpr float WindowHeight = Constants::Containers::ButtonHeight * 3 + Constants::Margins::big * 2;
+
+        constexpr float PopupWidth = Constants::Containers::ButtonWidth * 3 + Constants::Margins::big * 2;
+        constexpr float PopupHeight = Constants::Containers::ButtonHeight * 3 + Constants::Margins::big * 2;
+    }
+
     namespace Parameter
     {
+        // Compressor
         constexpr float inputStart = -30.0f;
         constexpr float inputEnd = 30.0f;
         constexpr float inputInterval = 0.1f;

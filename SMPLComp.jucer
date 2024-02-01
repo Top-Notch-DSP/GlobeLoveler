@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<JUCERPROJECT id="vpXkaU" name="SMPLComp" projectType="audioplug" jucerVersion="5.4.7"
-              pluginFormats="buildAU,buildAUv3,buildVST3" cppLanguageStandard="latest"
-              reportAppUsage="0" displaySplashScreen="0">
-  <MAINGROUP id="LEzWVi" name="SMPLComp">
+<JUCERPROJECT id="vpXkaU" name="GlobeLoveler" projectType="audioplug" pluginFormats="buildStandalone"
+              cppLanguageStandard="latest" reportAppUsage="0" displaySplashScreen="1"
+              version="1.1.0" jucerFormatVersion="1" pluginName="GlobeLoveler"
+              pluginDesc="A simplified version of the CTAGDRC audio compressor."
+              pluginManufacturer="Top Notch DSP, LLC" companyName="Top Notch DSP, LLC"
+              companyWebsite="https://www.topnotchdsp.com" pluginChannelConfigs="{2,2}"
+              defines="JUCE_MODAL_LOOPS_PERMITTED=1&#10;JUCE_USE_CUSTOM_PLUGIN_STANDALONE_APP = 1">
+  <MAINGROUP id="LEzWVi" name="GlobeLoveler">
     <GROUP id="{85ABA220-5DDF-78C0-699F-59C19B48E4B3}" name="Fonts">
       <FILE id="Mpl2lG" name="Roboto-Bold.ttf" compile="0" resource="1" file="Fonts/Roboto-Bold.ttf"/>
       <FILE id="kTgHzN" name="Roboto-Light.ttf" compile="0" resource="1"
@@ -14,6 +18,14 @@
             file="Fonts/Roboto-Regular.ttf"/>
     </GROUP>
     <GROUP id="{5A0EF8AE-8D06-47C2-3355-D47D53C81E0D}" name="Source">
+      <GROUP id="{B1DD039F-F42A-417B-78BF-C9D608165674}" name="app">
+        <GROUP id="{C8934D3B-8C46-44A7-2687-697A37AB2A35}" name="include">
+          <FILE id="f1zYIu" name="SMPLCompFilterWindow.h" compile="0" resource="0"
+                file="Source/app/include/SMPLCompFilterWindow.h"/>
+        </GROUP>
+        <FILE id="RwiqgS" name="SMPLCompStandaloneApp.cpp" compile="1" resource="0"
+              file="Source/app/SMPLCompStandaloneApp.cpp"/>
+      </GROUP>
       <GROUP id="{3111DD47-F512-FEB1-37C2-9B52C07285D2}" name="gui">
         <GROUP id="{8A7FDE73-851E-F2D1-D74B-031974A751FA}" name="include">
           <FILE id="DI997s" name="LabeledSlider.h" compile="0" resource="0" file="Source/gui/include/LabeledSlider.h"/>
@@ -22,6 +34,12 @@
                 file="Source/gui/include/MeterBackground.h"/>
           <FILE id="zKGPz3" name="MeterNeedle.h" compile="0" resource="0" file="Source/gui/include/MeterNeedle.h"/>
           <FILE id="akpxl2" name="ModSlider.h" compile="0" resource="0" file="Source/gui/include/ModSlider.h"/>
+          <FILE id="p94q5x" name="SMPLCompStandaloneDemoPopup.h" compile="0"
+                resource="0" file="Source/gui/include/SMPLCompStandaloneDemoPopup.h"/>
+          <FILE id="pQ37gh" name="SMPLCompStandaloneInfoPopup.h" compile="0"
+                resource="0" file="Source/gui/include/SMPLCompStandaloneInfoPopup.h"/>
+          <FILE id="fo0mOc" name="SMPLCompStandaloneLookAndFeel.h" compile="0"
+                resource="0" file="Source/gui/include/SMPLCompStandaloneLookAndFeel.h"/>
           <FILE id="xv6nuy" name="SMPLCompLookAndFeel.h" compile="0" resource="0"
                 file="Source/gui/include/SMPLCompLookAndFeel.h"/>
         </GROUP>
@@ -29,6 +47,10 @@
         <FILE id="N9xHr7" name="MeterBackground.cpp" compile="1" resource="0"
               file="Source/gui/MeterBackground.cpp"/>
         <FILE id="aYG6FZ" name="MeterNeedle.cpp" compile="1" resource="0" file="Source/gui/MeterNeedle.cpp"/>
+        <FILE id="NOrtzy" name="SMPLCompStandaloneDemoPopup.cpp" compile="1"
+              resource="0" file="Source/gui/SMPLCompStandaloneDemoPopup.cpp"/>
+        <FILE id="gnVKmH" name="SMPLCompStandaloneInfoPopup.cpp" compile="1"
+              resource="0" file="Source/gui/SMPLCompStandaloneInfoPopup.cpp"/>
       </GROUP>
       <GROUP id="{568E9E03-2250-C4A0-AE00-0C5CCCDA100C}" name="dsp">
         <GROUP id="{C9EAC937-D5F3-3F1E-1B3C-69EFC89E0879}" name="include">
@@ -63,7 +85,30 @@
     </GROUP>
   </MAINGROUP>
   <EXPORTFORMATS>
-    <XCODE_MAC targetFolder="Builds/MacOSX">
+    <VS2022 targetFolder="Builds/VisualStudio2022">
+      <CONFIGURATIONS>
+        <CONFIGURATION isDebug="1" name="Debug"/>
+        <CONFIGURATION isDebug="0" name="Release"/>
+      </CONFIGURATIONS>
+      <MODULEPATHS>
+        <MODULEPATH id="juce_audio_basics" path="C:\Dev\Juce\JUCE\modules"/>
+        <MODULEPATH id="juce_audio_devices" path="C:\Dev\Juce\JUCE\modules"/>
+        <MODULEPATH id="juce_audio_formats" path="C:\Dev\Juce\JUCE\modules"/>
+        <MODULEPATH id="juce_audio_plugin_client" path="C:\Dev\Juce\JUCE\modules"/>
+        <MODULEPATH id="juce_audio_processors" path="C:\Dev\Juce\JUCE\modules"/>
+        <MODULEPATH id="juce_audio_utils" path="C:\Dev\Juce\JUCE\modules"/>
+        <MODULEPATH id="juce_core" path="C:\Dev\Juce\JUCE\modules"/>
+        <MODULEPATH id="juce_cryptography" path="C:\Dev\Juce\JUCE\modules"/>
+        <MODULEPATH id="juce_data_structures" path="C:\Dev\Juce\JUCE\modules"/>
+        <MODULEPATH id="juce_dsp" path="C:\Dev\Juce\JUCE\modules"/>
+        <MODULEPATH id="juce_events" path="C:\Dev\Juce\JUCE\modules"/>
+        <MODULEPATH id="juce_graphics" path="C:\Dev\Juce\JUCE\modules"/>
+        <MODULEPATH id="juce_gui_basics" path="C:\Dev\Juce\JUCE\modules"/>
+        <MODULEPATH id="juce_gui_extra" path="C:\Dev\Juce\JUCE\modules"/>
+        <MODULEPATH id="juce_opengl" path="C:\Dev\Juce\JUCE\modules"/>
+      </MODULEPATHS>
+    </VS2022>
+    <XCODE_MAC targetFolder="Builds/MacOSX" hardenedRuntime="1" hardenedRuntimeOptions="com.apple.security.device.audio-input">
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug"/>
         <CONFIGURATION isDebug="0" name="Release"/>

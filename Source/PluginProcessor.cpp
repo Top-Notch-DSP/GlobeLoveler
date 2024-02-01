@@ -1,30 +1,28 @@
 /*
   ==============================================================================
-
-    This file was auto-generated!
-
-    It contains the basic framework code for a JUCE plugin processor.
-
+    File:           PluginProcessor.cpp
+    Developers:     D. Robert Hoover and Kris Keillor
+    Repository URL: https://github.com/Top-Notch-DSP/GlobeLoveler
+    Date:           2024 Feb 1
+    Forked From:    p-hlp
+    Original URL:   https://github.com/p-hlp/SMPLComp/tree/master
+    License:        GNU General Public License, version 3.0 (GPL-3.0)
   ==============================================================================
 */
 
+#pragma once
+
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "util/Constants.h"
+#include <juce_audio_plugin_client/Standalone/juce_StandaloneFilterWindow.h>
 
-//==============================================================================
-SmplcompAudioProcessor::SmplcompAudioProcessor()
-#ifndef JucePlugin_PreferredChannelConfigurations
-    : AudioProcessor(BusesProperties()
-#if ! JucePlugin_IsMidiEffect
-#if ! JucePlugin_IsSynth
-          .withInput("Input", AudioChannelSet::stereo(), true)
-#endif
-          .withOutput("Output", AudioChannelSet::stereo(), true)
-#endif
-      ), parameters(*this, nullptr, "PARAMETERS", createParameterLayout())
-#endif
+GlobeLoveler::GlobeLoveler()
+    : AudioProcessor(),
+    parameters(*this, nullptr, "PARAMETERS", createParameterLayout())
 {
-    //Add parameter listener
+    // Compressor parameters -KGK
+    // Add parameter listeners
     parameters.addParameterListener("inputgain", this);
     parameters.addParameterListener("makeup", this);
     parameters.addParameterListener("threshold", this);
@@ -39,17 +37,19 @@ SmplcompAudioProcessor::SmplcompAudioProcessor()
     currentOutput.set(-std::numeric_limits<float>::infinity());
 }
 
-SmplcompAudioProcessor::~SmplcompAudioProcessor()
+//==============================================================================
+GlobeLoveler::~GlobeLoveler()
 {
 }
 
 //==============================================================================
-const String SmplcompAudioProcessor::getName() const
+const String GlobeLoveler::getName() const
 {
     return JucePlugin_Name;
 }
 
-bool SmplcompAudioProcessor::acceptsMidi() const
+//==============================================================================
+bool GlobeLoveler::acceptsMidi() const
 {
 #if JucePlugin_WantsMidiInput
     return true;
@@ -58,7 +58,8 @@ bool SmplcompAudioProcessor::acceptsMidi() const
 #endif
 }
 
-bool SmplcompAudioProcessor::producesMidi() const
+//==============================================================================
+bool GlobeLoveler::producesMidi() const
 {
 #if JucePlugin_ProducesMidiOutput
     return true;
@@ -67,7 +68,8 @@ bool SmplcompAudioProcessor::producesMidi() const
 #endif
 }
 
-bool SmplcompAudioProcessor::isMidiEffect() const
+//==============================================================================
+bool GlobeLoveler::isMidiEffect() const
 {
 #if JucePlugin_IsMidiEffect
     return true;
@@ -76,38 +78,49 @@ bool SmplcompAudioProcessor::isMidiEffect() const
 #endif
 }
 
-double SmplcompAudioProcessor::getTailLengthSeconds() const
+//==============================================================================
+double GlobeLoveler::getTailLengthSeconds() const
 {
     return 0.0;
 }
 
-int SmplcompAudioProcessor::getNumPrograms()
+//==============================================================================
+int GlobeLoveler::getNumPrograms()
 {
     return 1; // NB: some hosts don't cope very well if you tell them there are 0 programs,
     // so this should be at least 1, even if you're not really implementing programs.
 }
 
-int SmplcompAudioProcessor::getCurrentProgram()
+//==============================================================================
+int GlobeLoveler::getCurrentProgram()
 {
     return 0;
 }
 
-void SmplcompAudioProcessor::setCurrentProgram(int index)
-{
-}
-
-const String SmplcompAudioProcessor::getProgramName(int index)
-{
-    return {};
-}
-
-void SmplcompAudioProcessor::changeProgramName(int index, const String& newName)
+//==============================================================================
+void GlobeLoveler::setCurrentProgram(int index)
 {
 }
 
 //==============================================================================
-void SmplcompAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
+const String GlobeLoveler::getProgramName(int index)
 {
+    return {};
+}
+
+//==============================================================================
+void GlobeLoveler::changeProgramName(int index, const String& newName)
+{
+}
+
+//==============================================================================
+void GlobeLoveler::prepareToPlay(double sampleRate, int samplesPerBlock)
+{
+    globeSampleRate = sampleRate;
+    globeSamplesPerBlock = samplesPerBlock;
+    DBG(String::formatted("Sample rate set to %f", globeSampleRate));
+    DBG(String::formatted("Samples per block set to %f", globeSamplesPerBlock));
+
     // Prepare dsp classes
     compressor.prepare({sampleRate, static_cast<uint32>(samplesPerBlock), 2});
     inLevelFollower.prepare(sampleRate);
@@ -118,47 +131,46 @@ void SmplcompAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBloc
     outLevelFollower.setPeakDecay(0.3f);
 }
 
-void SmplcompAudioProcessor::releaseResources()
+//==============================================================================
+void GlobeLoveler::releaseResources()
 {
     // When playback stops, you can use this as an opportunity to free up any
     // spare memory, etc.
 }
 
+//==============================================================================
 #ifndef JucePlugin_PreferredChannelConfigurations
-bool SmplcompAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const
+bool GlobeLoveler::isBusesLayoutSupported(const BusesLayout& layouts) const
 {
-#if JucePlugin_IsMidiEffect
-    ignoreUnused (layouts);
-    return true;
-#else
-    // This is the place where you check if the layout is supported.
-    // In this template code we only support mono or stereo.
+    // Support mono, stereo, and disabled output channels -KGK
     if (layouts.getMainOutputChannelSet() != AudioChannelSet::mono()
-        && layouts.getMainOutputChannelSet() != AudioChannelSet::stereo())
+        && layouts.getMainOutputChannelSet() != AudioChannelSet::stereo()
+        && layouts.getMainOutputChannelSet() != AudioChannelSet::disabled())
         return false;
-
-    // This checks if the input layout matches the output layout
-#if ! JucePlugin_IsSynth
-    if (layouts.getMainOutputChannelSet() != layouts.getMainInputChannelSet())
-        return false;
-#endif
-
     return true;
-#endif
 }
 #endif
 
-void SmplcompAudioProcessor::processBlock(AudioBuffer<float>& buffer, MidiBuffer& midiMessages)
+//==============================================================================
+void GlobeLoveler::processBlock(AudioBuffer<float>& buffer, MidiBuffer& midiMessages)
 {
     ScopedNoDenormals noDenormals;
     auto totalNumInputChannels = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
     const auto numSamples = buffer.getNumSamples();
 
+    // Cull output channels
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear(i, 0, buffer.getNumSamples());
 
-    //Update input peak metering
+    // Map mono input to stereo input -KGK
+    if (totalNumOutputChannels == 2 && totalNumInputChannels == 1) {
+        buffer.setSize(2, numSamples, true, true, false);
+        buffer.copyFrom(1, 0, buffer, 0, 0, numSamples);
+        DBG("Copied channel 0 into channel 1");
+    }
+
+    // Update input peak metering
     inLevelFollower.updatePeak(buffer.getArrayOfReadPointers(), totalNumInputChannels, numSamples);
     currentInput.set(Decibels::gainToDecibels(inLevelFollower.getPeak()));
 
@@ -174,39 +186,85 @@ void SmplcompAudioProcessor::processBlock(AudioBuffer<float>& buffer, MidiBuffer
 }
 
 //==============================================================================
-bool SmplcompAudioProcessor::hasEditor() const
+AudioProcessorEditor* GlobeLoveler::createEditor()
 {
-    return true; // (change this to false if you choose to not supply an editor)
-}
-
-AudioProcessorEditor* SmplcompAudioProcessor::createEditor()
-{
-    return new SmplcompAudioProcessorEditor(*this, parameters);
+    return new GlobeLovelerEditor(*this, parameters);
 }
 
 //==============================================================================
-void SmplcompAudioProcessor::getStateInformation(MemoryBlock& destData)
+bool GlobeLoveler::hasEditor() const
 {
-    // You should use this method to store your parameters in the memory block.
-    // You could do that either as raw data, or use the XML or ValueTree classes
-    // as intermediaries to make it easy to save and load complex data.
-}
-
-void SmplcompAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
-{
-    // You should use this method to restore your parameters from this memory block,
-    // whose contents will have been created by the getStateInformation() call.
+    return true;
 }
 
 //==============================================================================
-// This creates new instances of the plugin..
+void GlobeLoveler::getStateInformation(MemoryBlock& destData)
+{
+    // Prepare to read XML data
+    auto state = parameters.copyState();
+    // Create the root element
+    std::unique_ptr<juce::XmlElement> rootElement = std::make_unique<juce::XmlElement>("GlobeLovelerState");
+    
+    // Create the status element
+    std::unique_ptr<juce::XmlElement> statusElement = std::make_unique<juce::XmlElement>("STATUS");
+    // * Add version number to status
+    statusElement.get()->setAttribute("version", JUCEApplication::getInstance()->getApplicationVersion());
+    // * Add release type to status, "Release" or "Debug" (should change to "Development" -KGK
+    #ifndef JUCE_DEBUG
+        statusElement.get()->setAttribute("release", "Release");
+    #else
+        statusElement.get()->setAttribute("release", "Debug");
+    #endif
+    // * Add status element to root element
+    rootElement->addChildElement(statusElement.release());
+
+    // Create the parameters element & add to the root element 
+    std::unique_ptr<juce::XmlElement> parametersElement(state.createXml());
+    rootElement->addChildElement(parametersElement.release());
+
+    // Convert XML data to binary
+    MemoryBlock binaryData;
+    copyXmlToBinary(*rootElement, binaryData);
+
+    // Resize dest block to fit binary data plus null terminator
+    const int dataSize = binaryData.getSize();
+    destData.setSize(dataSize + 1);
+    // * Copy data and write null terminator
+    memcpy(destData.getData(), binaryData.getData(), dataSize);
+    destData[dataSize] = '\0';
+}
+
+//==============================================================================
+void GlobeLoveler::setStateInformation(const void* data, int sizeInBytes)
+{
+    std::unique_ptr<juce::XmlElement> xmlState(getXmlFromBinary(data, sizeInBytes));
+
+    if (xmlState.get() != nullptr) {
+        if (auto statusXml = xmlState->getChildByName("STATUS"))
+        {
+            auto versionString = statusXml->getStringAttribute("version", "0.0.0");
+        }
+
+        if (auto parametersXml = xmlState->getChildByName("PARAMETERS"))
+        {
+            if (parametersXml->hasTagName(parameters.state.getType())) {
+                parameters.replaceState(juce::ValueTree::fromXml(*parametersXml));
+            }
+        }
+    }
+}
+
+//==============================================================================
+// This creates new instances of the plugin
 AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
-    return new SmplcompAudioProcessor();
+    return new GlobeLoveler();
 }
 
-void SmplcompAudioProcessor::parameterChanged(const String& parameterID, float newValue)
+//==============================================================================
+void GlobeLoveler::parameterChanged(const String& parameterID, float newValue)
 {
+    // Compressor parameters
     if (parameterID == "inputgain") compressor.setInput(newValue);
     else if (parameterID == "threshold") compressor.setThreshold(newValue);
     else if (parameterID == "ratio") compressor.setRatio(newValue);
@@ -215,9 +273,11 @@ void SmplcompAudioProcessor::parameterChanged(const String& parameterID, float n
     else if (parameterID == "release") compressor.setRelease(newValue);
     else if (parameterID == "makeup") compressor.setMakeup(newValue);
     else if (parameterID == "mix") compressor.setMix(newValue);
+	DBG("Received unknown parameter " + parameterID);
 }
 
-AudioProcessorValueTreeState::ParameterLayout SmplcompAudioProcessor::createParameterLayout()
+//==============================================================================
+AudioProcessorValueTreeState::ParameterLayout GlobeLoveler::createParameterLayout()
 {
     std::vector<std::unique_ptr<RangedAudioParameter>> params;
 
@@ -235,12 +295,11 @@ AudioProcessorValueTreeState::ParameterLayout SmplcompAudioProcessor::createPara
                                                                return String(value, 1) + " dB";
                                                            }));
 
-
     params.push_back(std::make_unique<AudioParameterFloat>("threshold", "Tresh",
                                                            NormalisableRange<float>(
                                                                Constants::Parameter::thresholdStart,
                                                                Constants::Parameter::thresholdEnd,
-                                                               Constants::Parameter::thresholdInterval), -10.0f,
+                                                               Constants::Parameter::thresholdInterval), -40.0f,
                                                            String(), AudioProcessorParameter::genericParameter,
                                                            [](float value, float maxStrLen)
                                                            {
@@ -303,7 +362,7 @@ AudioProcessorValueTreeState::ParameterLayout SmplcompAudioProcessor::createPara
                                                            NormalisableRange<float>(
                                                                Constants::Parameter::makeupStart,
                                                                Constants::Parameter::makeupEnd,
-                                                               Constants::Parameter::makeupInterval), 0.0f,
+                                                               Constants::Parameter::makeupInterval), 10.0f,
                                                            String(),
                                                            AudioProcessorParameter::genericParameter,
                                                            [](float value, float)
@@ -321,6 +380,6 @@ AudioProcessorValueTreeState::ParameterLayout SmplcompAudioProcessor::createPara
                                                            {
                                                                return String(value * 100.0f, 1) + " %";
                                                            }));
-
+   
     return {params.begin(), params.end()};
 }

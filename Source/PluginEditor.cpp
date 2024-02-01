@@ -1,10 +1,12 @@
 /*
   ==============================================================================
-
-    This file was auto-generated!
-
-    It contains the basic framework code for a JUCE plugin editor.
-
+    File:           PluginEditor.cpp
+    Developers:     D. Robert Hoover and Kris Keillor
+    Repository URL: https://github.com/Top-Notch-DSP/GlobeLoveler
+    Date:           2024 Feb 1
+    Forked From:    p-hlp
+    Original URL:   https://github.com/p-hlp/SMPLComp/tree/master
+    License:        GNU General Public License, version 3.0 (GPL-3.0)
   ==============================================================================
 */
 
@@ -12,44 +14,66 @@
 #include "PluginEditor.h"
 
 //==============================================================================
-SmplcompAudioProcessorEditor::SmplcompAudioProcessorEditor(SmplcompAudioProcessor& p, AudioProcessorValueTreeState& vts)
-    : AudioProcessorEditor(&p), processor(p), valueTreeState(vts), backgroundApp(Colour(Constants::Colors::bg_App)),
-      inGainLSlider(this), makeupGainLSlider(this),
-      threshLSlider(this), ratioLSlider(this), kneeLSlider(this), attackLSlider(this), releaseLSlider(this),
-      mixLSlider(this)
+GlobeLovelerEditor::GlobeLovelerEditor(GlobeLoveler& p, AudioProcessorValueTreeState& vts)
+    #pragma region Initializers
+        : AudioProcessorEditor(&p), processor(p), valueTreeState(vts), backgroundApp(Colour(Constants::Colors::bg_App)),
+          inGainLSlider(this), makeupGainLSlider(this),
+          threshLSlider(this), ratioLSlider(this), kneeLSlider(this), attackLSlider(this), releaseLSlider(this),
+          mixLSlider(this)
+    #pragma endregion
 {
+    // Add this editor as a listener to the audio processor -KGK
+    p.addListener(this);
+    // Set the look and feel -KGK
     setLookAndFeel(&LAF);
+    // Init widgets -KGK
     initWidgets();
-    setSize(400, 260);
+    // Set window size
+    setSize(Constants::Containers::WindowWidth, Constants::Containers::WindowHeight);
+
+    #if GLOBE_LOVELER_DEMO_MODE
+        // Start demo mode
+        initDemoMode();
+    #endif
+
     startTimerHz(60);
 }
 
-SmplcompAudioProcessorEditor::~SmplcompAudioProcessorEditor()
+//==============================================================================
+GlobeLovelerEditor::~GlobeLovelerEditor()
 {
     setLookAndFeel(nullptr);
 }
 
 //==============================================================================
-void SmplcompAudioProcessorEditor::paint(Graphics& g)
+void GlobeLovelerEditor::paint(Graphics& g)
 {
     // (Our component is opaque, so we must completely fill the background with a solid colour)
     g.fillAll(backgroundApp);
 }
 
-void SmplcompAudioProcessorEditor::resized()
+//==============================================================================
+void GlobeLovelerEditor::resized()
 {
     auto area = getLocalBounds().reduced(Constants::Margins::big);
-
-    const auto btnAreaWidth = area.getWidth() / 5;
-    const auto btnBotHeight = area.getHeight() / 3;
-
-    auto lBtnArea = area.removeFromLeft(btnAreaWidth).reduced(Constants::Margins::small);
-    auto rBtnArea = area.removeFromRight(btnAreaWidth).reduced(Constants::Margins::small);
-    auto botBtnArea = area.removeFromBottom(btnBotHeight).reduced(Constants::Margins::medium);
+    const auto areaHeight = area.getHeight();
+    const auto areaWidth = area.getWidth();
+    // Rectangles created from area in bottom-to-top order -KGK
+    #if GLOBE_REVERB
+        #ifdef JUCE_DEBUG
+            auto combAreaClusterToggles = area.removeFromBottom(Constants::Containers::ToggleHeight);
+            auto combAreaSecondRow = area.removeFromBottom(Constants::Containers::ButtonHeight).reduced(Constants::Margins::small);
+            auto combAreaPrimaryRow = area.removeFromBottom(Constants::Containers::ButtonHeight).reduced(Constants::Margins::small);
+            auto allPassAreaButtons = area.removeFromBottom(Constants::Containers::ToggleHeight).reduced(Constants::Margins::small);
+        #endif
+        auto reverbBtnArea = area.removeFromBottom(Constants::Containers::ButtonHeight).reduced(Constants::Margins::small);
+    #endif
+    auto lBtnArea = area.removeFromLeft(Constants::Containers::ButtonWidth).reduced(Constants::Margins::small);
+    auto rBtnArea = area.removeFromRight(Constants::Containers::ButtonWidth).reduced(Constants::Margins::small);
+    auto botBtnArea = area.removeFromBottom(Constants::Containers::ButtonHeight).reduced(Constants::Margins::medium);
 
     const FlexItem::Margin knobMargin = FlexItem::Margin(Constants::Margins::small);
     const FlexItem::Margin knobMarginSmall = FlexItem::Margin(Constants::Margins::medium);
-
 
     FlexBox leftBtnBox;
     leftBtnBox.flexWrap = FlexBox::Wrap::noWrap;
@@ -84,8 +108,8 @@ void SmplcompAudioProcessorEditor::resized()
     meterBox.performLayout(area.toFloat());
 }
 
-
-void SmplcompAudioProcessorEditor::timerCallback()
+//==============================================================================
+void GlobeLovelerEditor::timerCallback()
 {
     int m = meter.getMode();
     switch (m)
@@ -107,8 +131,25 @@ void SmplcompAudioProcessorEditor::timerCallback()
     }
 }
 
-void SmplcompAudioProcessorEditor::initWidgets()
+// audioProcessorChanged and audioProcessorParameterChanged methods -KGK
+//==============================================================================
+// Triggered in globbeLoveler.setStateInformation() -KGK
+void GlobeLovelerEditor::audioProcessorChanged(AudioProcessor* source, const ChangeDetails& details) {
+    // TODO: check details fields and flags -KGK
+}
+
+//==============================================================================
+// NON-OPERATIVE -KGK
+void GlobeLovelerEditor::audioProcessorParameterChanged(AudioProcessor* processor,
+    int parameterIndex, float newValue)
 {
+    return;
+}
+
+//==============================================================================
+void GlobeLovelerEditor::initWidgets()
+{
+    // Compressor Widgets
     addAndMakeVisible(inGainLSlider);
     inGainLSlider.reset(valueTreeState, "inputgain");
     inGainLSlider.setLabelText("Input");
