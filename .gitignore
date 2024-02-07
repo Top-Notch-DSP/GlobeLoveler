@@ -2,3 +2,4 @@
 *JuceLibraryCode/
 *.vs/
 .DS_Store
+Builds-Archive/*
